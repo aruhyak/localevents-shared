@@ -80,3 +80,12 @@ npm run typecheck
 `mock.ts` exists so phase 1 runs with no backend. In phase 2 the fragments call
 the BFF instead and `nearby()` is replaced by `ST_DWithin` on a GiST index —
 the types and formatters stay.
+
+## Licence
+
+**Publicly visible, but not open source.** Copyright © 2026 Aruhya Kambampati,
+all rights reserved — see [LICENSE](LICENSE).
+
+This repo is public only so the project's build tooling can resolve it as a
+dependency without credentials. That is a practical decision, not a grant of
+rights to use the code.
