@@ -27,10 +27,35 @@ export function haversineKm(
   return 2 * EARTH_RADIUS_KM * Math.asin(Math.sqrt(h));
 }
 
-/** "400 m" under a kilometre, "1.2 km" above. */
-export function formatDistance(km: number): string {
-  if (km < 1) return `${Math.round(km * 1000 / 50) * 50} m`;
-  return `${km.toFixed(1)} km`;
+export const KM_PER_MILE = 1.609344;
+
+export const milesToKm = (mi: number): number => mi * KM_PER_MILE;
+export const kmToMiles = (km: number): number => km / KM_PER_MILE;
+
+/** Radius choices offered in the feed. Miles, because the audience is US. */
+export const RADIUS_MILES = [5, 10, 15, 20, 50, 75, 100] as const;
+export type RadiusMiles = (typeof RADIUS_MILES)[number];
+
+export type DistanceUnit = 'mi' | 'km';
+
+/**
+ * Distances are stored in km (PostGIS works in metres) but shown in miles,
+ * since the audience is US. Under a mile it reads in feet, rounded to 50 —
+ * false precision like "0.34 mi" is worse than "1,800 ft" for judging whether
+ * something is walkable.
+ */
+export function formatDistance(km: number, unit: DistanceUnit = 'mi'): string {
+  if (unit === 'km') {
+    if (km < 1) return `${Math.round((km * 1000) / 50) * 50} m`;
+    return `${km.toFixed(1)} km`;
+  }
+  const mi = kmToMiles(km);
+  if (mi < 0.2) {
+    const ft = Math.round((mi * 5280) / 50) * 50;
+    return `${ft} ft`;
+  }
+  if (mi < 10) return `${mi.toFixed(1)} mi`;
+  return `${Math.round(mi)} mi`;
 }
 
 /** "in 2 hours", "tomorrow", "Sat 14 Mar" — relative where it helps, absolute where it doesn't. */
