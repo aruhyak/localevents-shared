@@ -2,6 +2,7 @@ import type {
   Author, EventPost, FeedItem, FeedQuery, OfferPost, Post, RequestPost,
 } from './types.js';
 import { haversineKm } from './geo.js';
+import { isPast } from './types.js';
 
 /**
  * Phase 1 data. Replaced in phase 2 by the BFF talking to Postgres.
@@ -211,7 +212,49 @@ const offers: OfferPost[] = [
   },
 ];
 
-export const ALL_POSTS: Post[] = [...events, ...requests, ...offers];
+
+/* ── finished — populates profile history ──────────────────────────────── */
+
+const pastPosts: Post[] = [
+  {
+    id: 'h1', kind: 'event', status: 'published',
+    title: 'Street party for the long weekend',
+    description: 'We closed the road, someone brought a smoker, it went on far too long. Same again next year.',
+    ...near(0.3, -0.4), neighbourhood: 'Bouldin Creek',
+    author: A.devin, createdAt: daysFromNow(-40),
+    startsAt: daysFromNow(-28), category: 'community', rsvpCount: 63,
+  },
+  {
+    id: 'h2', kind: 'event', status: 'published',
+    title: 'Five-a-side at the rec centre',
+    description: 'Weekly kickabout. Numbers dropped off over winter so we stopped.',
+    ...near(0.9, 0.5), neighbourhood: 'Zilker',
+    author: A.devin, createdAt: daysFromNow(-90),
+    startsAt: daysFromNow(-14), category: 'sport', rsvpCount: 9,
+  },
+  {
+    id: 'h3', kind: 'request', status: 'published',
+    title: 'Cat sitting over the holidays',
+    description: 'Two weeks, twice a day. Rosa took it on and sent photos every day — would ask again.',
+    ...near(0.4, -0.6), neighbourhood: 'Bouldin Creek',
+    author: A.priya, createdAt: daysFromNow(-70),
+    serviceType: 'petcare',
+    neededFrom: daysFromNow(-60), neededTo: daysFromNow(-46),
+    budget: 210, claimState: 'done', claimedBy: 'u7', requiresHomeAccess: true,
+  },
+  {
+    id: 'h4', kind: 'request', status: 'published',
+    title: 'Help clearing the garage',
+    description: 'Two hours, two people, one skip. Done and dusted.',
+    ...near(-0.7, 0.2), neighbourhood: 'Bouldin Creek',
+    author: A.devin, createdAt: daysFromNow(-22),
+    serviceType: 'handyman',
+    neededFrom: daysFromNow(-18), neededTo: daysFromNow(-18),
+    budget: 90, claimState: 'done', claimedBy: 'u6', requiresHomeAccess: false,
+  },
+];
+
+export const ALL_POSTS: Post[] = [...events, ...requests, ...offers, ...pastPosts];
 
 /**
  * Stand-in for `events_nearby(lat, lng, radius, from)`.
@@ -219,8 +262,10 @@ export const ALL_POSTS: Post[] = [...events, ...requests, ...offers];
  */
 export function nearby(q: FeedQuery, posts: Post[] = ALL_POSTS): FeedItem[] {
   const kinds = q.kinds;
+  const now = new Date();
   return posts
     .filter((p) => p.status === 'published')
+    .filter((p) => !isPast(p, now))          // the feed shows what's still on
     .filter((p) => !kinds?.length || kinds.includes(p.kind))
     .map((post) => ({
       post,

@@ -147,3 +147,21 @@ export function offerIsPublishable(offer: OfferPost): boolean {
   if (!requiresLicence(offer.trades)) return true;
   return offer.licence?.verified === true;
 }
+
+/**
+ * Has this post finished?
+ *
+ * Each kind ends differently, which is exactly why the rule lives here rather
+ * than being re-derived in each fragment:
+ *   event    — its start time has passed
+ *   request  — the window closed, or someone completed it
+ *   offer    — standing listings only end when withdrawn
+ */
+export function isPast(post: Post, now: Date = new Date()): boolean {
+  if (post.status === 'closed') return true;
+  if (post.kind === 'event') return new Date(post.startsAt).getTime() < now.getTime();
+  if (post.kind === 'request') {
+    return post.claimState === 'done' || new Date(post.neededTo).getTime() < now.getTime();
+  }
+  return false;
+}
