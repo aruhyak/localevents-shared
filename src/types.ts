@@ -131,6 +131,8 @@ export interface FeedQuery {
   radiusKm: number;
   kinds?: PostKind[];
   from?: string;
+  /** Include posts that finished within the grace window, rendered greyed. */
+  includeEnded?: boolean;
 }
 
 /* ── type guards ────────────────────────────────────────────────────────── */
@@ -146,6 +148,44 @@ export const isOffer = (p: Post): p is OfferPost => p.kind === 'offer';
 export function offerIsPublishable(offer: OfferPost): boolean {
   if (!requiresLicence(offer.trades)) return true;
   return offer.licence?.verified === true;
+}
+
+/**
+ * How long a finished post lingers before it disappears.
+ *
+ * A day is deliberate: long enough that someone who missed it can still see it
+ * happened and who ran it, short enough that the feed doesn't silt up with
+ * last week's events. Ended posts render greyed rather than vanishing mid-day,
+ * which would look like a bug to whoever posted it.
+ */
+export const GRACE_HOURS = 24;
+
+export type Lifecycle = 'live' | 'ended' | 'expired';
+
+/** When does this post stop being on? */
+export function endsAtOf(post: Post): number | null {
+  if (post.kind === 'event') {
+    return new Date(post.endsAt ?? post.startsAt).getTime();
+  }
+  if (post.kind === 'request') {
+    return new Date(post.neededTo).getTime();
+  }
+  return null;                        // offers are standing until withdrawn
+}
+
+/**
+ * live    — still on, shows normally
+ * ended   — finished within the grace window, shows greyed
+ * expired — past the grace window, removed everywhere
+ */
+export function lifecycle(post: Post, now: Date = new Date()): Lifecycle {
+  if (post.status === 'closed') return 'expired';
+  const end = endsAtOf(post);
+  if (end === null) return 'live';
+  const t = now.getTime();
+  if (t <= end) return 'live';
+  if (t <= end + GRACE_HOURS * 3_600_000) return 'ended';
+  return 'expired';
 }
 
 /**

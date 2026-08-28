@@ -1,7 +1,7 @@
 import type {
   Author, EventPost, FeedItem, FeedQuery, OfferPost, Post, RequestPost,
 } from './types.js';
-import { isPast } from './types.js';
+import { lifecycle } from './types.js';
 import { haversineKm } from './geo.js';
 
 /**
@@ -289,9 +289,10 @@ export const ALL_POSTS: Post[] = [...events, ...requests, ...offers, ...pastPost
 export function nearby(q: FeedQuery, posts: Post[] = ALL_POSTS): FeedItem[] {
   const kinds = q.kinds;
   const now = new Date();
+  const allow = q.includeEnded ? ['live', 'ended'] : ['live'];
   return posts
     .filter((p) => p.status === 'published')
-    .filter((p) => !isPast(p, now))          // the feed shows what's still on
+    .filter((p) => allow.includes(lifecycle(p, now)))
     .filter((p) => !kinds?.length || kinds.includes(p.kind))
     .map((post) => ({
       post,
