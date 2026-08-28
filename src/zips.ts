@@ -71,11 +71,50 @@ export function isValidZipFormat(input: string): boolean {
 }
 
 /**
- * Async on purpose: phase 2 swaps the body for a BFF call and every caller
- * already awaits it.
+ * Local table first, then the network.
+ *
+ * The table answers instantly and offline for the trial area. Anything else
+ * falls back to Zippopotam.us — free, keyless, and covers every US zip, which
+ * matters because "not in the trial area" is a baffling message when you just
+ * typed your own zip code.
+ *
+ * Phase 2 replaces the fallback with a BFF call so the lookup is cached
+ * server-side and we aren't leaning on a free public service.
  */
 export async function lookupZip(input: string): Promise<ZipPlace | null> {
-  return BY_ZIP.get(normaliseZip(input)) ?? null;
+  const zip = normaliseZip(input);
+  if (zip.length !== 5) return null;
+
+  const local = BY_ZIP.get(zip);
+  if (local) return local;
+
+  try {
+    const res = await fetch(`https://api.zippopotam.us/us/${zip}`, {
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!res.ok) return null;                    // 404 = not a real US zip
+    const data = (await res.json()) as {
+      'post code': string;
+      places: { 'place name': string; state?: string; latitude: string; longitude: string }[];
+    };
+    const place = data.places?.[0];
+    if (!place) return null;
+
+    const lat = Number(place.latitude);
+    const lng = Number(place.longitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+
+    return {
+      zip: data['post code'] ?? zip,
+      label: place.state ? `${place['place name']}, ${place.state}` : place['place name'],
+      lat,
+      lng,
+    };
+  } catch {
+    // Offline or timed out. Null reads as "couldn't find it", which is honest
+    // — the caller shouldn't have to distinguish the two.
+    return null;
+  }
 }
 
 /** Nearest known place to a coordinate — used to label a GPS fix. */
