@@ -35,7 +35,7 @@ const venue = (id: string, displayName: string, verified = true): Author => ({
 });
 
 const A = {
-  maya: person('u1', 'Maya R.'),
+  aruhya: person('u1', 'Aruhya K.'),
   devin: person('u2', 'Devin O.'),
   priya: person('u3', 'Priya S.', true),
   tomas: person('u4', 'Tomás L.', true),
@@ -100,7 +100,7 @@ const events: EventPost[] = [
     title: 'Sunday morning run — Struble Trail',
     description: '5k out and back along the creek at a conversational pace. Coffee after, no one gets dropped.',
     ...near(1.8, 0.4), neighbourhood: 'Downingtown',
-    author: A.maya, createdAt: daysFromNow(-9),
+    author: A.aruhya, createdAt: daysFromNow(-9),
     startsAt: daysFromNow(4), category: 'sport', rsvpCount: 15,
     rrule: 'FREQ=WEEKLY;BYDAY=SU',
   },
@@ -161,7 +161,7 @@ const requests: RequestPost[] = [
     title: 'Lawn needs cutting — one off',
     description: "Small front and back, hasn't been done in a month. Happy to pay for the clippings to go too.",
     ...near(-1.4, -1.9), neighbourhood: 'Thorndale',
-    author: A.maya, createdAt: daysFromNow(-3),
+    author: A.aruhya, createdAt: daysFromNow(-3),
     serviceType: 'handyman',
     neededFrom: daysFromNow(1), neededTo: daysFromNow(7),
     budget: 70, claimState: 'open', requiresHomeAccess: false,
