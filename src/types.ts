@@ -38,7 +38,7 @@ export interface BasePost {
 /* ── events ─────────────────────────────────────────────────────────────── */
 
 export type EventCategory =
-  | 'music' | 'sport' | 'market' | 'food' | 'community' | 'kids' | 'class';
+  | 'music' | 'sport' | 'market' | 'yardsale' | 'food' | 'community' | 'kids' | 'class';
 
 export interface EventPost extends BasePost {
   kind: 'event';
