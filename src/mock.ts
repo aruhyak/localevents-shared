@@ -1,6 +1,7 @@
 import type {
   Author, EventPost, FeedItem, FeedQuery, OfferPost, Post, RequestPost,
 } from './types.js';
+import { allPosts } from './store.js';
 import { lifecycle } from './types.js';
 import { haversineKm } from './geo.js';
 
@@ -286,7 +287,10 @@ export const ALL_POSTS: Post[] = [...events, ...requests, ...offers, ...pastPost
  * Stand-in for `events_nearby(lat, lng, radius, from)`.
  * Same contract as the RPC it will become: radius filter, then sort.
  */
-export function nearby(q: FeedQuery, posts: Post[] = ALL_POSTS): FeedItem[] {
+export function nearby(q: FeedQuery, posts?: Post[]): FeedItem[] {
+  // Default includes posts written on this device. Passing an explicit list
+  // opts out — useful for tests, which should not see device state.
+  posts = posts ?? allPosts(ALL_POSTS);
   const kinds = q.kinds;
   const now = new Date();
   const allow = q.includeEnded ? ['live', 'ended'] : ['live'];
