@@ -33,7 +33,7 @@ export const milesToKm = (mi: number): number => mi * KM_PER_MILE;
 export const kmToMiles = (km: number): number => km / KM_PER_MILE;
 
 /** Radius choices offered in the feed. Miles, because the audience is US. */
-export const RADIUS_MILES = [5, 10, 15, 20, 50, 75, 100] as const;
+export const RADIUS_MILES = [5, 10, 15, 20, 50] as const;
 export type RadiusMiles = (typeof RADIUS_MILES)[number];
 
 export type DistanceUnit = 'mi' | 'km';
