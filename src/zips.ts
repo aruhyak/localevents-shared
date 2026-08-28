@@ -20,7 +20,7 @@ export interface ZipPlace {
   lng: number;
 }
 
-/** Austin and surrounds — the trial area. */
+/** The trial areas: Chester County PA, plus Austin from the earlier sample data. */
 export const ZIPS: readonly ZipPlace[] = [
   { zip: '78701', label: 'Downtown Austin',    lat: 30.2711, lng: -97.7437 },
   { zip: '78702', label: 'East Austin',        lat: 30.2626, lng: -97.7141 },
@@ -57,6 +57,22 @@ export const ZIPS: readonly ZipPlace[] = [
   { zip: '78669', label: 'Spicewood',          lat: 30.4746, lng: -98.0400 },
   { zip: '78734', label: 'Lakeway',            lat: 30.3721, lng: -97.9772 },
   { zip: '78652', label: 'Manchaca',           lat: 30.1355, lng: -97.8331 },
+
+  /* Chester County, PA */
+  { zip: '19335', label: 'Downingtown',        lat: 40.0161, lng: -75.7183 },
+  { zip: '19372', label: 'Thorndale',          lat: 39.9984, lng: -75.7590 },
+  { zip: '19341', label: 'Exton',              lat: 40.0468, lng: -75.6432 },
+  { zip: '19343', label: 'Glenmoore',          lat: 40.0846, lng: -75.7711 },
+  { zip: '19425', label: 'Chester Springs',    lat: 40.0978, lng: -75.6398 },
+  { zip: '19320', label: 'Coatesville',        lat: 39.9843, lng: -75.8253 },
+  { zip: '19355', label: 'Malvern',            lat: 40.0468, lng: -75.5310 },
+  { zip: '19380', label: 'West Chester',       lat: 39.9845, lng: -75.5962 },
+  { zip: '19382', label: 'West Chester South', lat: 39.9441, lng: -75.5882 },
+  { zip: '19460', label: 'Phoenixville',       lat: 40.1267, lng: -75.5272 },
+  { zip: '19301', label: 'Paoli',              lat: 40.0426, lng: -75.4827 },
+  { zip: '19312', label: 'Berwyn',             lat: 40.0412, lng: -75.4475 },
+  { zip: '19087', label: 'Wayne',              lat: 40.0612, lng: -75.3999 },
+  { zip: '19365', label: 'Parkesburg',         lat: 39.9654, lng: -75.9260 },
 ];
 
 const BY_ZIP = new Map(ZIPS.map((z) => [z.zip, z]));
