@@ -4,6 +4,7 @@ import type {
 import { allPosts } from './store.js';
 import { lifecycle } from './types.js';
 import { haversineKm } from './geo.js';
+import { ART_QUIZ, ART_MARKET, ART_OPENMIC, ART_POTTERY } from './art.js';
 
 /**
  * Phase 1 data. Replaced in phase 2 by the BFF talking to Postgres.
@@ -25,6 +26,36 @@ const near = (northKm: number, eastKm: number) => ({
 const hoursFromNow = (h: number) => new Date(Date.now() + h * 3_600_000).toISOString();
 const daysFromNow = (d: number) => new Date(Date.now() + d * 86_400_000).toISOString();
 
+/**
+ * The next occurrence of a weekday at a fixed local time.
+ *
+ * A weekly listing must actually fall on the day its rule claims. Generating
+ * these with hoursFromNow gave a quiz night whose BYDAY said Tuesday and whose
+ * startsAt was a Sunday at 12:38am — the time was whatever o'clock happened to
+ * be N hours away, which on the venues page meant every listing showed a
+ * nonsense hour.
+ */
+const BYDAY = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA'] as const;
+/** N days out, at a fixed local time rather than whatever o'clock it is now. */
+const daysFromNowAt = (days: number, hour: number, minute = 0) => {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+};
+
+const nextWeekdayAt = (day: (typeof BYDAY)[number], hour: number, minute = 0) => {
+  const target = BYDAY.indexOf(day);
+  const d = new Date();
+  d.setHours(hour, minute, 0, 0);
+  let delta = (target - d.getDay() + 7) % 7;
+  // Already gone today — a listing should point at the next one, not this
+  // morning's, or it renders as finished the moment the day starts.
+  if (delta === 0 && d.getTime() < Date.now()) delta = 7;
+  d.setDate(d.getDate() + delta);
+  return d.toISOString();
+};
+
 /* ── authors ────────────────────────────────────────────────────────────── */
 
 const person = (id: string, displayName: string, idVerified = false): Author => ({
@@ -44,6 +75,8 @@ const A = {
   carl: person('u6', 'Carl B.', true),
   rosa: person('u7', 'Rosa M.', true),
   ig: person('u8', 'Ignacio F.'),
+  nadia: person('u9', 'Nadia B.', true),
+  marta: person('u10', 'Marta K.', true),
   brew: venue('b1', 'Victory Brewing Co.'),
   market: venue('b2', 'Downingtown Farmers Market'),
   cafe: venue('b3', 'Bright Side Coffee'),
@@ -67,7 +100,7 @@ const events: EventPost[] = [
     description: 'Six rounds, teams up to six. $2 a head, winner takes the pot. Kitchen open till 9.',
     ...near(-0.4, 0.6), neighbourhood: 'Downingtown', venueName: 'Victory Brewing Co.',
     author: A.brew, createdAt: daysFromNow(-30),
-    startsAt: hoursFromNow(27), category: 'community', rsvpCount: 24,
+    imageUrl: ART_QUIZ, startsAt: nextWeekdayAt('TU', 19, 30), category: 'community', rsvpCount: 24,
     rrule: 'FREQ=WEEKLY;BYDAY=TU',
   },
   {
@@ -76,7 +109,7 @@ const events: EventPost[] = [
     description: 'Thirty stalls — produce, bread, cheese, coffee. Dog friendly, cash and card.',
     ...near(0.9, -0.5), neighbourhood: 'Downingtown', venueName: 'Kerr Park',
     author: A.market, createdAt: daysFromNow(-60),
-    startsAt: daysFromNow(3), category: 'market', rsvpCount: 89,
+    imageUrl: ART_MARKET, startsAt: nextWeekdayAt('SA', 9), category: 'market', rsvpCount: 89,
     rrule: 'FREQ=WEEKLY;BYDAY=SA',
   },
   {
@@ -85,7 +118,7 @@ const events: EventPost[] = [
     description: 'Furniture, kitchen stuff, a lot of books, one very good armchair. Early birds welcome.',
     ...near(-1.1, -0.4), neighbourhood: 'Thorndale',
     author: A.jen, createdAt: daysFromNow(-1),
-    startsAt: daysFromNow(2), category: 'community', rsvpCount: 3,
+    startsAt: daysFromNowAt(2, 9), category: 'community', rsvpCount: 3,
   },
   {
     id: 'e5', kind: 'event', status: 'published',
@@ -93,7 +126,7 @@ const events: EventPost[] = [
     description: 'Eight slots, ten minutes each. Piano and two mics provided. No cover.',
     ...near(1.4, 3.2), neighbourhood: 'Exton', venueName: 'Bright Side Coffee',
     author: A.cafe, createdAt: daysFromNow(-14),
-    startsAt: hoursFromNow(52), category: 'music', rsvpCount: 12,
+    imageUrl: ART_OPENMIC, startsAt: nextWeekdayAt('TH', 19), category: 'music', rsvpCount: 12,
     rrule: 'FREQ=WEEKLY;BYDAY=TH',
   },
   {
@@ -102,7 +135,7 @@ const events: EventPost[] = [
     description: '5k out and back along the creek at a conversational pace. Coffee after, no one gets dropped.',
     ...near(1.8, 0.4), neighbourhood: 'Downingtown',
     author: A.maya, createdAt: daysFromNow(-9),
-    startsAt: daysFromNow(4), category: 'sport', rsvpCount: 15,
+    startsAt: nextWeekdayAt('SU', 8), category: 'sport', rsvpCount: 15,
     rrule: 'FREQ=WEEKLY;BYDAY=SU',
   },
   {
@@ -111,7 +144,7 @@ const events: EventPost[] = [
     description: 'Three hours on the wheel, clay and firing included. Aprons provided, wear old clothes.',
     ...near(-2.2, 4.8), neighbourhood: 'West Chester', venueName: 'Brandywine Pottery',
     author: A.studio, createdAt: daysFromNow(-6),
-    startsAt: daysFromNow(5), category: 'class', rsvpCount: 6,
+    imageUrl: ART_POTTERY, startsAt: daysFromNowAt(5, 18, 30), category: 'class', rsvpCount: 6,
     price: 45, ticketUrl: 'https://example.com/pottery',
   },
   {
@@ -120,7 +153,7 @@ const events: EventPost[] = [
     description: 'Two hours, gloves and bags provided. Township is bringing a truck for the haul-out.',
     ...near(7.5, -3.0), neighbourhood: 'Chester Springs',
     author: A.tomas, createdAt: daysFromNow(-5),
-    startsAt: daysFromNow(6), category: 'community', rsvpCount: 21,
+    startsAt: daysFromNowAt(6, 10), category: 'community', rsvpCount: 21,
   },
 ];
 
@@ -135,7 +168,7 @@ const requests: RequestPost[] = [
     author: A.priya, createdAt: daysFromNow(-1),
     serviceType: 'petcare',
     neededFrom: daysFromNow(6), neededTo: daysFromNow(13),
-    budget: 120, claimState: 'open', requiresHomeAccess: true,
+    budget: 120, claimState: 'open', contactPhone: '555-0142', requiresHomeAccess: true,
   },
   {
     id: 'r2', kind: 'request', status: 'published',
@@ -145,7 +178,7 @@ const requests: RequestPost[] = [
     author: A.tomas, createdAt: hoursFromNow(-6),
     serviceType: 'petcare',
     neededFrom: daysFromNow(2), neededTo: daysFromNow(30),
-    budget: 20, claimState: 'open', requiresHomeAccess: true,
+    budget: 20, claimState: 'open', contactPhone: '555-0168', requiresHomeAccess: true,
   },
   {
     id: 'r3', kind: 'request', status: 'published',
@@ -155,7 +188,7 @@ const requests: RequestPost[] = [
     author: A.jen, createdAt: hoursFromNow(-20),
     serviceType: 'handyman',
     neededFrom: daysFromNow(3), neededTo: daysFromNow(3),
-    budget: 60, claimState: 'claimed', claimedBy: 'u6', requiresHomeAccess: false,
+    budget: 60, claimState: 'claimed', contactPhone: '555-0177', claimedBy: 'u6', requiresHomeAccess: false,
   },
   {
     id: 'r4', kind: 'request', status: 'published',
@@ -211,7 +244,10 @@ const offers: OfferPost[] = [
     licence: { number: 'PA-EL-38217', state: 'PA', verified: true, verifiedAt: daysFromNow(-18) },
   },
   {
-    id: 'o4', kind: 'offer', status: 'draft',
+    id: 'o4', kind: 'offer', status: 'published',
+    // Published deliberately, with an UNVERIFIED licence: the licence gate is
+    // what withholds this, not its draft status. If a draft did the work the
+    // rule would never actually run, and a bug in it would be invisible.
     title: 'Plumbing — small jobs',
     description: 'Taps, traps, running toilets. Awaiting licence verification before this goes live.',
     ...near(-2.0, 0.5), neighbourhood: 'Thorndale',
@@ -237,7 +273,25 @@ const offers: OfferPost[] = [
     author: A.carl, createdAt: daysFromNow(-12),
     trades: ['gutters', 'lawn'], rate: 120, rateUnit: 'job',
     availability: 'Weekday afternoons',
+  },  {
+    id: 'o7', kind: 'offer', status: 'published',
+    title: 'Dog walking and drop-in visits',
+    description: 'Walks, feeding, litter — the lot. I do this around school hours, so weekday lunchtimes are easy. Happy to meet the animal first.',
+    ...near(0.9, -0.4), neighbourhood: 'Downingtown',
+    author: A.nadia, createdAt: daysFromNow(-11),
+    trades: ['petcare'], rate: 18, rateUnit: 'visit',
+    availability: 'Weekdays, 10am–3pm',
   },
+  {
+    id: 'o8', kind: 'offer', status: 'published',
+    title: 'Cat sitting while you travel',
+    description: 'Two visits a day and a photo each time, so you know they are fine. Three of my own and references from four families on this street.',
+    ...near(-1.3, 0.7), neighbourhood: 'Downingtown',
+    author: A.marta, createdAt: daysFromNow(-19),
+    trades: ['petcare'], rate: 25, rateUnit: 'visit',
+    availability: 'Any day, including holidays',
+  },
+
 ];
 
 /* ── finished — populates profile history ───────────────────────────────── */
@@ -249,7 +303,7 @@ const pastPosts: Post[] = [
     description: 'We closed the road, someone brought a smoker, it went on far too long. Same again next year.',
     ...near(0.3, -0.4), neighbourhood: 'Downingtown',
     author: A.devin, createdAt: daysFromNow(-40),
-    startsAt: daysFromNow(-28), category: 'community', rsvpCount: 63,
+    startsAt: daysFromNowAt(-28, 16), category: 'community', rsvpCount: 63,
   },
   {
     id: 'h2', kind: 'event', status: 'published',
@@ -257,7 +311,7 @@ const pastPosts: Post[] = [
     description: 'Weekly kickabout. Numbers dropped off over winter so we stopped.',
     ...near(0.9, 0.5), neighbourhood: 'Downingtown',
     author: A.devin, createdAt: daysFromNow(-90),
-    startsAt: daysFromNow(-14), category: 'sport', rsvpCount: 9,
+    startsAt: daysFromNowAt(-14, 18), category: 'sport', rsvpCount: 9,
   },
   {
     id: 'h3', kind: 'request', status: 'published',

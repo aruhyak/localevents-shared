@@ -71,6 +71,18 @@ export interface RequestPost extends BasePost {
   claimState: ClaimState;
   claimedBy?: string;
   /**
+   * The poster's number, shown ONLY to whoever they choose.
+   *
+   * A field rather than something typed into the description, because a
+   * number in the body is visible to everyone the moment it is posted and
+   * cannot be taken back. As a field it can be withheld, and phase 2 can stop
+   * returning it from the API entirely.
+   *
+   * See canSeeContact() in replies.ts for the rule, and the note there about
+   * why it is not yet enforcement.
+   */
+  contactPhone?: string;
+  /**
    * Someone entering your home while you're away is a different risk from
    * turning up to a pickup game. This flag gates ID verification.
    */
@@ -81,7 +93,15 @@ export interface RequestPost extends BasePost {
 
 export type Trade =
   | 'lawn' | 'cleaning' | 'gutters' | 'hauling' | 'painting' | 'handyman'
+  | 'petcare'
   | 'electrical' | 'plumbing' | 'hvac' | 'gas';
+
+/** Trades that belong on the Pets tab rather than Handyman. */
+export const PET_TRADES: readonly Trade[] = ['petcare'] as const;
+
+export function isPetTrade(trades: readonly Trade[]): boolean {
+  return trades.some((t) => PET_TRADES.includes(t));
+}
 
 /**
  * Electrical, plumbing, HVAC and gas require a trade licence in nearly every

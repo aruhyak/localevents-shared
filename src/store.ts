@@ -86,7 +86,29 @@ export function removeLocalPost(id: string): void {
   write(localPosts().filter((p) => p.id !== id));
 }
 
-/** Everything the feed should consider: seeded posts plus this device's own. */
+/**
+ * Everything the feed should consider: seeded posts plus this device's own.
+ *
+ * Local entries OVERRIDE seeded ones with the same id, rather than sitting
+ * alongside them. That makes the store an override layer, which is what lets a
+ * seeded post be claimed or edited at all — the seed is a constant and cannot
+ * be mutated in place. Without the dedupe the post would simply appear twice.
+ *
+ * It is also the shape phase 2 wants: the server is the truth, and this
+ * becomes a local cache of changes not yet pushed.
+ */
 export function allPosts(seed: readonly Post[]): Post[] {
-  return [...localPosts(), ...seed];
+  const local = localPosts();
+  const overridden = new Set(local.map((p) => p.id));
+  return [...local, ...seed.filter((p) => !overridden.has(p.id))];
+}
+
+/**
+ * Record a change to a post, seeded or not.
+ *
+ * Upsert by id — addLocalPost already replaces a same-id entry, so claiming a
+ * seeded post writes an overriding copy rather than editing the constant.
+ */
+export function updateLocalPost(post: Post): void {
+  addLocalPost(post);
 }

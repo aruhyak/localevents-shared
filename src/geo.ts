@@ -114,3 +114,38 @@ export function formatDailyRun(startsIso: string, endsIso: string | undefined, u
   const last = new Date(until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   return `${hours} daily · to ${last}`;
 }
+
+const WEEKDAY: Record<string, string> = {
+  SU: 'Sunday', MO: 'Monday', TU: 'Tuesday', WE: 'Wednesday',
+  TH: 'Thursday', FR: 'Friday', SA: 'Saturday',
+};
+
+/**
+ * How a weekly listing reads: "Tuesdays · 7:30 PM".
+ *
+ * A quiz night that happens every Tuesday is not usefully described by the
+ * date of its next occurrence — "Sun 12:38am · repeats" was both wrong and
+ * meaningless. The day it recurs on is the whole point, and it comes from the
+ * rule rather than from any one occurrence.
+ *
+ * Returns null when the rule is not a weekly one with days, so callers can
+ * fall through to their normal formatting.
+ */
+export function formatWeekly(rrule: string | undefined, startsIso: string): string | null {
+  if (!rrule || !/FREQ=WEEKLY/.test(rrule)) return null;
+  const m = /BYDAY=([A-Z,]+)/.exec(rrule);
+  if (!m || !m[1]) return null;
+  const days = m[1].split(',').map((d) => WEEKDAY[d]).filter(Boolean);
+  if (!days.length) return null;
+
+  const d = new Date(startsIso);
+  const time = d.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: d.getMinutes() ? '2-digit' : undefined,
+  });
+  // "Tuesdays", or "Mondays & Thursdays" for a rule with two days.
+  const label = days.length === 1
+    ? `${days[0]}s`
+    : days.map((x) => `${x}s`).join(' & ');
+  return `${label} · ${time}`;
+}
