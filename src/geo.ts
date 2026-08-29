@@ -97,3 +97,20 @@ export function formatRange(fromIso: string, toIso: string): string {
   if (f.toDateString() === t.toDateString()) return fmt(f);
   return `${fmt(f)} – ${t.toLocaleDateString('en-US', { day: 'numeric' })}`;
 }
+
+/**
+ * How a repeating, multi-day event reads on a card.
+ *
+ * "ended · repeats" is what you get from describing such an event by its first
+ * occurrence — technically true of day one, and wrong about the event, which
+ * is still on. What matters is the hours it keeps and the day it stops.
+ */
+export function formatDailyRun(startsIso: string, endsIso: string | undefined, until: number): string {
+  const t = (d: Date) =>
+    d.toLocaleTimeString(undefined, { hour: 'numeric', minute: d.getMinutes() ? '2-digit' : undefined })
+      .replace(' ', '\u2009');
+  const from = new Date(startsIso);
+  const hours = endsIso ? `${t(from)}–${t(new Date(endsIso))}` : t(from);
+  const last = new Date(until).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  return `${hours} daily · to ${last}`;
+}

@@ -163,9 +163,39 @@ export const GRACE_HOURS = 24;
 export type Lifecycle = 'live' | 'ended' | 'expired';
 
 /** When does this post stop being on? */
+/**
+ * The UNTIL of an iCal RRULE, in local time.
+ *
+ * A multi-day event is one occurrence plus a recurrence, not one long block —
+ * a three-day yard sale is 8am–5pm on each of three days, not a 57-hour event.
+ * So `endsAt` is the end of the FIRST day, and the last day lives in the rule.
+ *
+ * Local, not UTC, even when the value carries a trailing Z: these are
+ * neighbourhood events written and read in one place, and shifting a 5pm
+ * finish by the UTC offset would end them on the wrong day.
+ */
+export function untilOf(rrule: string | undefined): number | null {
+  if (!rrule) return null;
+  const m = /UNTIL=(\d{8})(?:T(\d{6}))?/.exec(rrule);
+  if (!m) return null;
+  // noUncheckedIndexedAccess types every match group as possibly undefined,
+  // including group 1, which the regex guarantees when m is non-null.
+  const d = m[1] ?? '';
+  const t = m[2] ?? '235959';
+  if (d.length !== 8) return null;
+  const n = (str: string, a: number, b: number) => Number(str.slice(a, b));
+  return new Date(
+    n(d, 0, 4), n(d, 4, 6) - 1, n(d, 6, 8),
+    n(t, 0, 2), n(t, 2, 4), n(t, 4, 6),
+  ).getTime();
+}
+
 export function endsAtOf(post: Post): number | null {
   if (post.kind === 'event') {
-    return new Date(post.endsAt ?? post.startsAt).getTime();
+    // A recurring event is over when the recurrence is, not when its first
+    // occurrence is. Rules without an UNTIL (a weekly run club, say) fall
+    // through and are governed by their single occurrence as before.
+    return untilOf(post.rrule) ?? new Date(post.endsAt ?? post.startsAt).getTime();
   }
   if (post.kind === 'request') {
     return new Date(post.neededTo).getTime();
