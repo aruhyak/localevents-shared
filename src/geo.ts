@@ -95,7 +95,14 @@ export function formatRange(fromIso: string, toIso: string): string {
   const fmt = (d: Date) =>
     d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   if (f.toDateString() === t.toDateString()) return fmt(f);
-  return `${fmt(f)} – ${t.toLocaleDateString('en-US', { day: 'numeric' })}`;
+  // The month may only be dropped from the end when both dates share it AND
+  // the same year. Aug 31 to Sep 28 was rendering as "Aug 31 – 28", which reads
+  // as a range that ends before it starts.
+  const sameMonth =
+    f.getMonth() === t.getMonth() && f.getFullYear() === t.getFullYear();
+  return sameMonth
+    ? `${fmt(f)} – ${t.toLocaleDateString('en-US', { day: 'numeric' })}`
+    : `${fmt(f)} – ${fmt(t)}`;
 }
 
 /**

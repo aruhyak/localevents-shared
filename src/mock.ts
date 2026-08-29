@@ -118,7 +118,7 @@ const events: EventPost[] = [
     description: 'Furniture, kitchen stuff, a lot of books, one very good armchair. Early birds welcome.',
     ...near(-1.1, -0.4), neighbourhood: 'Thorndale',
     author: A.jen, createdAt: daysFromNow(-1),
-    startsAt: daysFromNowAt(2, 9), category: 'community', rsvpCount: 3,
+    startsAt: daysFromNowAt(2, 9), category: 'yardsale', rsvpCount: 3,
   },
   {
     id: 'e5', kind: 'event', status: 'published',
