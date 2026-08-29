@@ -47,6 +47,16 @@ export interface Message {
   displayName: string;
   message: string;
   createdAt: string;
+  /**
+   * Was the writer ID-verified when they wrote this?
+   *
+   * Recorded on the message rather than looked up, because there is no user
+   * directory in phase 1 — the only place a person's verified state appears is
+   * on posts they authored, and someone who has only ever replied has authored
+   * none. Storing it also makes it a fact about the moment: a message written
+   * before verification does not retroactively become verified.
+   */
+  idVerified?: boolean;
 }
 
 /** Kept as an alias: this was called Reply before threads existed. */
@@ -56,6 +66,8 @@ export interface Thread {
   postId: string;
   helperId: string;
   helperName: string;
+  /** Was the helper verified when they opened the conversation? */
+  helperVerified: boolean;
   messages: Message[];
   last: Message;
   /** Anything here the viewer has not written and has not seen. */
@@ -117,6 +129,7 @@ function toThread(postId: string, helperId: string, messages: Message[]): Thread
     // The helper's name comes from the message that opened the thread — the
     // poster's replies carry the poster's name, not theirs.
     helperName: first.displayName,
+    helperVerified: first.idVerified === true,
     messages,
     last,
     unreadFor: (viewerId, since) =>
@@ -172,6 +185,7 @@ export function sendMessage(input: {
   authorId: string;
   displayName: string;
   message: string;
+  idVerified?: boolean;
 }): Message | null {
   const text = input.message.trim();
   if (!text) return null;
@@ -186,6 +200,7 @@ export function sendMessage(input: {
     displayName: input.displayName,
     message: text,
     createdAt: new Date().toISOString(),
+    idVerified: input.idVerified,
   };
   return writeAll([...all, msg]) ? msg : null;
 }

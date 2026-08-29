@@ -35,6 +35,17 @@ export interface Notice {
   unread: boolean;
   /** Which conversation this belongs to, so tapping opens the right one. */
   helperId: string;
+  /** Was the person who wrote this ID-verified at the time? */
+  verified: boolean;
+  /**
+   * Is this on a post of YOURS?
+   *
+   * The same 'reply' notice means two different things depending on which side
+   * you are on: on your own post someone offered to help, on someone else's
+   * the poster wrote back to you. Without this the second case read as
+   * "Tomás offered to help" on a post Tomás had written himself.
+   */
+  onYourPost: boolean;
 }
 
 function storage(): Storage | null {
@@ -108,6 +119,8 @@ export function noticesFor(viewerId: string, posts: readonly Post[]): Notice[] {
           at: theirs.createdAt,
           unread: Date.parse(theirs.createdAt) > seen,
           helperId: thread.helperId,
+          verified: theirs.idVerified === true,
+          onYourPost: isOwner,
         });
       }
 
@@ -124,6 +137,8 @@ export function noticesFor(viewerId: string, posts: readonly Post[]): Notice[] {
           at: thread.last.createdAt,
           unread: chosen && Date.parse(thread.last.createdAt) > seen,
           helperId: thread.helperId,
+          verified: r.author.idVerified === true,
+          onYourPost: false,
         });
       }
     }
