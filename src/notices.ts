@@ -37,6 +37,8 @@ export interface Notice {
   helperId: string;
   /** Was the person who wrote this ID-verified at the time? */
   verified: boolean;
+  /** And had they confirmed a phone number? Separate claim, separate badge. */
+  phoneVerified: boolean;
   /**
    * Is this on a post of YOURS?
    *
@@ -120,6 +122,7 @@ export function noticesFor(viewerId: string, posts: readonly Post[]): Notice[] {
           unread: Date.parse(theirs.createdAt) > seen,
           helperId: thread.helperId,
           verified: theirs.idVerified === true,
+          phoneVerified: theirs.phoneVerified === true,
           onYourPost: isOwner,
         });
       }
@@ -138,6 +141,7 @@ export function noticesFor(viewerId: string, posts: readonly Post[]): Notice[] {
           unread: chosen && Date.parse(thread.last.createdAt) > seen,
           helperId: thread.helperId,
           verified: r.author.idVerified === true,
+          phoneVerified: r.author.phoneVerified === true,
           onYourPost: false,
         });
       }
