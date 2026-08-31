@@ -58,8 +58,13 @@ const nextWeekdayAt = (day: (typeof BYDAY)[number], hour: number, minute = 0) =>
 
 /* ── authors ────────────────────────────────────────────────────────────── */
 
-const person = (id: string, displayName: string, idVerified = false): Author => ({
-  id, displayName, kind: 'individual', verified: false, idVerified,
+const person = (
+  id: string,
+  displayName: string,
+  idVerified = false,
+  phoneVerified = false,
+): Author => ({
+  id, displayName, kind: 'individual', verified: false, idVerified, phoneVerified,
 });
 
 const venue = (id: string, displayName: string, verified = true): Author => ({
@@ -67,16 +72,20 @@ const venue = (id: string, displayName: string, verified = true): Author => ({
 });
 
 const A = {
-  maya: person('u1', 'Maya R.'),
-  devin: person('u2', 'Devin O.'),
-  priya: person('u3', 'Priya S.', true),
-  tomas: person('u4', 'Tomás L.', true),
-  jen: person('u5', 'Jen W.'),
-  carl: person('u6', 'Carl B.', true),
-  rosa: person('u7', 'Rosa M.', true),
-  ig: person('u8', 'Ignacio F.'),
-  nadia: person('u9', 'Nadia B.', true),
-  marta: person('u10', 'Marta K.', true),
+  // Deliberately spread across all four states, so the feed shows every
+  // combination rather than only the easy ones. Roughly what a real
+  // neighbourhood looks like too: confirming a phone is a minute's work and
+  // most people do it, while an ID check is a bigger ask and fewer bother.
+  maya: person('u1', 'Maya R.', false, true),        // phone only
+  devin: person('u2', 'Devin O.'),                   // neither
+  priya: person('u3', 'Priya S.', true, true),       // both
+  tomas: person('u4', 'Tomás L.', true, true),       // both
+  jen: person('u5', 'Jen W.', false, true),          // phone only
+  carl: person('u6', 'Carl B.', true),               // ID only
+  rosa: person('u7', 'Rosa M.', true, true),         // both
+  ig: person('u8', 'Ignacio F.'),                    // neither
+  nadia: person('u9', 'Nadia B.', true, true),       // both
+  marta: person('u10', 'Marta K.', true),            // ID only
   brew: venue('b1', 'Victory Brewing Co.'),
   market: venue('b2', 'Downingtown Farmers Market'),
   cafe: venue('b3', 'Bright Side Coffee'),
