@@ -57,6 +57,9 @@ export interface Message {
    * before verification does not retroactively become verified.
    */
   idVerified?: boolean;
+
+  /** Likewise for the phone badge, captured when the message was written. */
+  phoneVerified?: boolean;
 }
 
 /** Kept as an alias: this was called Reply before threads existed. */
@@ -66,8 +69,10 @@ export interface Thread {
   postId: string;
   helperId: string;
   helperName: string;
-  /** Was the helper verified when they opened the conversation? */
+  /** Was the helper ID-verified when they opened the conversation? */
   helperVerified: boolean;
+  /** And had they confirmed a phone number? */
+  helperPhoneVerified: boolean;
   messages: Message[];
   last: Message;
   /** Anything here the viewer has not written and has not seen. */
@@ -130,6 +135,7 @@ function toThread(postId: string, helperId: string, messages: Message[]): Thread
     // poster's replies carry the poster's name, not theirs.
     helperName: first.displayName,
     helperVerified: first.idVerified === true,
+    helperPhoneVerified: first.phoneVerified === true,
     messages,
     last,
     unreadFor: (viewerId, since) =>
@@ -186,6 +192,7 @@ export function sendMessage(input: {
   displayName: string;
   message: string;
   idVerified?: boolean;
+  phoneVerified?: boolean;
 }): Message | null {
   const text = input.message.trim();
   if (!text) return null;
@@ -201,6 +208,7 @@ export function sendMessage(input: {
     message: text,
     createdAt: new Date().toISOString(),
     idVerified: input.idVerified,
+    phoneVerified: input.phoneVerified,
   };
   return writeAll([...all, msg]) ? msg : null;
 }

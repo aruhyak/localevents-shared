@@ -19,6 +19,15 @@ export interface Author {
   verified: boolean;
   /** Government ID checked via Stripe Identity / Persona. Documents are never stored. */
   idVerified: boolean;
+  /**
+   * A code was texted to their number and typed back.
+   *
+   * Separate from idVerified on purpose: they answer different questions. ID
+   * says the name is real; this says there is a number that reaches them. The
+   * server sets it — see /me/phone/confirm — and never the client, or it is
+   * just a checkbox anyone can tick about themselves.
+   */
+  phoneVerified?: boolean;
 }
 
 export interface BasePost {
