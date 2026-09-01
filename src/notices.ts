@@ -40,6 +40,13 @@ export interface Notice {
   /** And had they confirmed a phone number? Separate claim, separate badge. */
   phoneVerified: boolean;
   /**
+   * The last word was yours — nobody has answered yet.
+   *
+   * Distinct from unread, which is about whether YOU have seen something. This
+   * is about whether THEY have.
+   */
+  awaitingReply?: boolean;
+  /**
    * Is this on a post of YOURS?
    *
    * The same 'reply' notice means two different things depending on which side
@@ -110,19 +117,36 @@ export function noticesFor(viewerId: string, posts: readonly Post[]): Notice[] {
       // The newest message the OTHER person wrote — your own words are never
       // news to you.
       const theirs = [...thread.messages].reverse().find((m) => m.authorId !== viewerId);
-      if (theirs) {
+
+      /* A conversation you started but nobody has answered yet still belongs
+         on this page.
+
+         Only surfacing threads where the OTHER person wrote made Messages a
+         list of things done TO you, so somebody who offered to help saw an
+         empty page and no way back to what they had written. They had to find
+         the post again to see their own message. A messages page that hides
+         your own conversations is not a messages page.
+
+         It is shown with the last message either way; only the wording and the
+         unread flag differ, because your own words are never news to you. */
+      const last = theirs ?? thread.last;
+      if (last) {
         out.push({
           id: `msg:${thread.postId}:${thread.helperId}`,
           kind: 'reply',
           postId: r.id,
           postTitle: r.title,
-          actorName: theirs.displayName,
-          message: theirs.message,
-          at: theirs.createdAt,
-          unread: Date.parse(theirs.createdAt) > seen,
+          actorName: last.displayName,
+          message: last.message,
+          at: last.createdAt,
+          // Your own message is never unread. Only somebody else's can be.
+          unread: !!theirs && Date.parse(last.createdAt) > seen,
+          // Whether the last word was theirs, so the page can say "you offered
+          // to help" rather than pretending somebody replied.
+          awaitingReply: !theirs,
           helperId: thread.helperId,
-          verified: theirs.idVerified === true,
-          phoneVerified: theirs.phoneVerified === true,
+          verified: last.idVerified === true,
+          phoneVerified: last.phoneVerified === true,
           onYourPost: isOwner,
         });
       }
